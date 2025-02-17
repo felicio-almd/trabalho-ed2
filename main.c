@@ -4,9 +4,11 @@
 #include "trie.h"
 #include "hash.h"
 #include "index.h"
+#include <locale.h>
 
 int main()
 {
+    setlocale(LC_ALL, "pt_BR.UTF-8");
     // Ler o arquivo de texto
     char *text = read_file("texto.txt");
     if (!text)
