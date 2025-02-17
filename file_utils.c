@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// ESSE CODIGO É SO PARA MANIPULAR OS ARQUIVOS DE ENTRADA 
+
 char keywords[MAX_KEYWORDS][MAX_KEYWORD_LENGTH];
-int keyword_count = 0; // Defina a variável global aqui
+int keyword_count = 0;
 
 char *read_file(const char *filename)
 {
