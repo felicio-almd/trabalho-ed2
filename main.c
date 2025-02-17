@@ -23,12 +23,14 @@ int main()
 
     // Criar índice remissivo usando Trie
     create_index_trie(trie_root, text);
-    printf("Índice remissivo usando Trie:\n");
+    printf("Indice remissivo usando Trie:\n");
     print_index_trie(trie_root);
+
+    printf("\n");
 
     // Criar índice remissivo usando Tabela Hash
     create_index_hash(text);
-    printf("Índice remissivo usando Tabela Hash:\n");
+    printf("Indice remissivo usando Tabela Hash:\n");
     print_index_hash();
 
     // Liberar memória

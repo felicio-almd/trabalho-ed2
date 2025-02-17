@@ -20,4 +20,4 @@ void insert_hash(const char *word, int position);
 HashNode *search_hash(const char *word);
 void delete_index_hash();
 
-#endif // HASH_H
+#endif 
