@@ -4,10 +4,16 @@
 #include <ctype.h>
 #include <string.h>
 
-// ESSE CODIGO É SO PARA MANIPULAR OS ARQUIVOS DE ENTRADA 
+// ESSE CODIGO É SO PARA MANIPULAR OS ARQUIVOS DE ENTRADA
 
 char keywords[MAX_KEYWORDS][MAX_KEYWORD_LENGTH];
 int keyword_count = 0;
+
+// função para comparar strings e retorna em ordem alfabetica
+int compare_strings(const void *a, const void *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
 
 char *read_file(const char *filename)
 {
@@ -32,17 +38,21 @@ char *read_file(const char *filename)
     return text;
 }
 
-void load_keywords(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
+void load_keywords(const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (!file)
+    {
         perror("Erro ao abrir o arquivo de palavras-chave");
         exit(EXIT_FAILURE);
     }
 
     char buffer[MAX_KEYWORD_LENGTH];
-    while (fscanf(file, "%s", buffer) != EOF) {
+    while (fscanf(file, "%s", buffer) != EOF)
+    {
         // Converte cada caractere da palavra-chave para minúsculas
-        for (int i = 0; buffer[i]; i++) {
+        for (int i = 0; buffer[i]; i++)
+        {
             buffer[i] = tolower(buffer[i]);
         }
         strcpy(keywords[keyword_count], buffer);
@@ -50,4 +60,7 @@ void load_keywords(const char* filename) {
     }
 
     fclose(file);
+
+    // retorno em ordem alfabetica
+    qsort(keywords, keyword_count, MAX_KEYWORD_LENGTH, compare_strings);
 }
