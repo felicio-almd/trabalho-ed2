@@ -17,7 +17,7 @@ TrieNode *create_node()
 void insert_trie(TrieNode *root, const char *word, int position)
 {
     TrieNode *current = root;
-    for (int i = 0; word[i] != '\0'; i++)
+    for (int i = 0; word[i] != '\0' && word[i] != ',' && word[i] != '.' ; i++)
     {
         int index = word[i] - 'a';
         if (!current->children[index])

@@ -1,6 +1,8 @@
 #include "file_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 
 // ESSE CODIGO É SO PARA MANIPULAR OS ARQUIVOS DE ENTRADA 
 
@@ -30,17 +32,20 @@ char *read_file(const char *filename)
     return text;
 }
 
-void load_keywords(const char *filename)
-{
-    FILE *file = fopen(filename, "r");
-    if (!file)
-    {
+void load_keywords(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
         perror("Erro ao abrir o arquivo de palavras-chave");
         exit(EXIT_FAILURE);
     }
 
-    while (fscanf(file, "%s", keywords[keyword_count]) != EOF)
-    {
+    char buffer[MAX_KEYWORD_LENGTH];
+    while (fscanf(file, "%s", buffer) != EOF) {
+        // Converte cada caractere da palavra-chave para minúsculas
+        for (int i = 0; buffer[i]; i++) {
+            buffer[i] = tolower(buffer[i]);
+        }
+        strcpy(keywords[keyword_count], buffer);
         keyword_count++;
     }
 
