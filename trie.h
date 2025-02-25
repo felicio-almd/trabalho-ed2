@@ -25,8 +25,8 @@ typedef struct TrieNode
 
 // Funções
 
-int get_char_index(wchar_t c);
 TrieNode *createTrieNode();
+int get_char_index(wchar_t c);
 void insertKeyword(TrieNode *root, const wchar_t *word);
 void addPosition(PositionNode **head, int position);
 void processText(TrieNode *root, const char *filename);

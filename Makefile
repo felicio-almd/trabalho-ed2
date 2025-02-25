@@ -1,16 +1,20 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
-TARGET = index
-SRCS = main.c trie.c 
-OBJS = $(SRCS:.c=.o)
+CC=gcc
+CFLAGS=-Wall -Wextra -g
+LDFLAGS=
+
+SRCS=main.c trie.c
+OBJS=$(SRCS:.c=.o)
+TARGET=indice
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-%.o: %.c
+%.o: %.c trie.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+.PHONY: all clean
