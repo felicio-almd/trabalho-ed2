@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
-TARGET = index_remissivo
-SRCS = main.c trie.c hash.c file_utils.c index.c
+TARGET = index
+SRCS = main.c trie.c 
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)
