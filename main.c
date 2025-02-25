@@ -21,7 +21,9 @@ int main()
     fclose(keyFile);
 
     processText(root, "texto.txt");
+    printf("Imprimindo via arvore digital:\n\n");
     printIndex(root);
+    printf("\n");
     freeTrie(root);
 
     return 0;
