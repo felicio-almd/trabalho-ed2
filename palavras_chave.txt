@@ -6,3 +6,5 @@ pais
 nos
 nós
 clássica
+@cienciatododia
+#ciência

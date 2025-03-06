@@ -50,7 +50,6 @@ TrieNode *createTrieNode()
     return node;
 }
 
-// essa função é meio estranha
 void insertKeyword(TrieNode *root, const wchar_t *word)
 {
     TrieNode *node = root;
@@ -83,7 +82,6 @@ void insertKeyword(TrieNode *root, const wchar_t *word)
     free(normalized);
 }
 
-// essa tbm
 void addPosition(PositionNode **head, int position)
 {
     position++; // Começa do 1
