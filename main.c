@@ -7,10 +7,8 @@ int main()
 
     // --------------- IMPLEMENTAÇÃO COM TRIE ---------------
     printf("=== IMPLEMENTAÇÃO COM TRIE ===\n");
-
     TrieNode *root = createTrieNode();
-
-    FILE *keyFile = fopen("palavras_chave.txt", "r");
+    FILE *keyFile = fopen("para.txt", "r");
     if (!keyFile)
     {
         perror("Erro ao abrir arquivo de palavras-chave");
@@ -24,22 +22,21 @@ int main()
     }
     fclose(keyFile);
 
-    processText(root, "texto.txt");
-
+    processText(root, "vasco.txt");
     printf("Imprimindo via árvore digital (trie):\n\n");
     printIndex(root);
 
     // --------------- IMPLEMENTAÇÃO COM HASH ---------------
-    printf("=== IMPLEMENTAÇÃO COM TABELA HASH ===\n");
-
-    HashTable *table = createHashTable(101);
+    printf("\n=== IMPLEMENTAÇÃO COM TABELA HASH ===\n");
+    HashTable *table = createHashTable(101); // Tamanho primo da tabela
 
     // Lê o arquivo de palavras-chave novamente
-    keyFile = fopen("palavras_chave.txt", "r");
+    keyFile = fopen("para.txt", "r");
     if (!keyFile)
     {
         perror("Erro ao abrir arquivo de palavras-chave");
         freeTrie(root);
+        freeHashTable(table);
         return 1;
     }
 
@@ -50,8 +47,7 @@ int main()
     fclose(keyFile);
 
     // Processa o arquivo de texto
-    processTextHash(table, "texto.txt");
-
+    processTextHash(table, "vasco.txt");
     printf("Imprimindo via tabela hash:\n\n");
     printIndexHash(table);
 

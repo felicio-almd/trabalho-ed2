@@ -1,41 +1,43 @@
-/* hash.h */
 #ifndef HASH_H
 #define HASH_H
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <wchar.h>
-#include <stddef.h>
+#include <wctype.h>
+#include <locale.h>
+#include <string.h>
 
-#define HASH_LOAD_FACTOR 0.7
-
-// Estrutura para lista de posições
+// Estrutura para armazenar as posições em que a palavra aparece
 typedef struct PositionNodeHash
 {
     int position;
     struct PositionNodeHash *next;
 } PositionNodeHash;
 
-// Entrada da tabela hash
+// Estrutura para um elemento da tabela hash
 typedef struct HashEntry
 {
     wchar_t *keyword;
     PositionNodeHash *positions;
-    int is_active; // 0: vazio, 1: ativo, 2: removido
+    int isOccupied; // 0: vazio, 1: ocupado, -1: deletado
 } HashEntry;
 
-// Tabela hash
+// Estrutura para a tabela hash
 typedef struct HashTable
 {
     HashEntry *entries;
     int size;
-    int count;
 } HashTable;
 
-// Protótipos das funções
+// Funções da tabela hash
 HashTable *createHashTable(int size);
+unsigned int hashFunction(const wchar_t *str, int tableSize);
 void insertKeywordHash(HashTable *table, const wchar_t *word);
-HashEntry *searchHashTable(const HashTable *table, const wchar_t *word);
+void addPositionHash(PositionNodeHash **head, int position);
 void processTextHash(HashTable *table, const char *filename);
-void printIndexHash(const HashTable *table);
+void printPositionsHash(PositionNodeHash *node);
+void printIndexHash(HashTable *table);
 void freeHashTable(HashTable *table);
 
-#endif
+#endif /* HASH_H */
