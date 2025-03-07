@@ -107,24 +107,61 @@ void addPosition(PositionNode **head, int position)
     current->next = newNode;
 }
 
-void processText(TrieNode *root, wchar_t word; int logicalPosition)
+void processText(TrieNode *root, const char *filename)
 {
-    node = root;
-    for (size_t k = 0; k < wordLen; k++)
+    FILE *file = fopen(filename, "r");
+    if (!file)
     {
-        int index = get_char_index(word[k]);
-        if (index < 0 || !node->children[index])
-        {
-            node = NULL;
-            break;
-        }
-        node = node->children[index];
+        perror("Erro ao abrir arquivo de texto");
+        exit(1);
     }
 
-    if (node && node->keyword)
+    int logicalPosition = 0;
+    wchar_t buffer[1024];
+
+    while (fgetws(buffer, sizeof(buffer) / sizeof(wchar_t), file))
     {
-        addPosition(&node->positions, logicalPosition);
+        size_t lineLen = wcslen(buffer);
+
+        for (size_t i = 0; i < lineLen;)
+        {
+            TrieNode *node = root;
+            wchar_t wordBuffer[256];
+            int wordLen = 0;
+            size_t j;
+
+            // Coleta a palavra mantendo os acentos
+            for (j = i; j < lineLen && iswalpha(buffer[j]) && wordLen < 255; j++)
+            {
+                wordBuffer[wordLen++] = towlower(buffer[j]);
+            }
+            wordBuffer[wordLen] = L'\0';
+
+            if (wordLen > 0)
+            {
+                node = root;
+                for (size_t k = 0; k < wordLen; k++)
+                {
+                    int index = get_char_index(wordBuffer[k]);
+                    if (index < 0 || !node->children[index])
+                    {
+                        node = NULL;
+                        break;
+                    }
+                    node = node->children[index];
+                }
+
+                if (node && node->keyword)
+                {
+                    addPosition(&node->positions, logicalPosition);
+                }
+            }
+
+            logicalPosition++;
+            i++;
+        }
     }
+    fclose(file);
 }
 
 void printPositions(PositionNode *node)
