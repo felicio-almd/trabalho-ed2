@@ -32,6 +32,7 @@ typedef struct HashTable
 
 // Funções da tabela hash
 HashTable *createHashTable(int size);
+void printHashTable(HashTable *table);
 unsigned int hashFunction(const wchar_t *str, int tableSize);
 void insertKeywordHash(HashTable *table, const wchar_t *word);
 void addPositionHash(PositionNodeHash **head, int position);
@@ -39,5 +40,6 @@ void processTextHash(HashTable *table, const char *filename);
 void printPositionsHash(PositionNodeHash *node);
 void printIndexHash(HashTable *table);
 void freeHashTable(HashTable *table);
+int compareHashEntries(const void *a, const void *b);
 
 #endif /* HASH_H */

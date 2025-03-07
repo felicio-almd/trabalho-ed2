@@ -1,10 +1,6 @@
-literatura
-classica
-grandes
-romantismo
-pais
-nos
-nós
-clássica
-@cienciatododia
-#ciência
+ASCII!
+%c
+"#$%&'()
+Python
+Exemplos:
+Exemplos

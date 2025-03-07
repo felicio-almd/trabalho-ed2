@@ -47,6 +47,36 @@ wchar_t *normalizeWord(const wchar_t *word)
     return normalized;
 }
 
+void printHashTable(HashTable *table)
+{
+    if (table == NULL || table->entries == NULL)
+    {
+        wprintf(L"Tabela hash inválida!\n");
+        return;
+    }
+
+    for (int i = 0; i < table->size; i++)
+    {
+        HashEntry entry = table->entries[i];
+
+        if (entry.isOccupied == 1)
+        {
+            // Entrada ocupada com palavra-chave
+            wprintf(L"Índice %d: [OCUPADO]  %ls\n", i, entry.keyword);
+        }
+        else if (entry.isOccupied == -1)
+        {
+            // Entrada marcada como removida (tombstone)
+            wprintf(L"Índice %d: [REMOVIDO]\n", i);
+        }
+        else
+        {
+            // Entrada livre
+            wprintf(L"Índice %d: [LIVRE]\n", i);
+        }
+    }
+}
+
 // Função para inserir uma palavra-chave na tabela hash
 void insertKeywordHash(HashTable *table, const wchar_t *word)
 {
@@ -87,7 +117,7 @@ void insertKeywordHash(HashTable *table, const wchar_t *word)
         table->entries[index].keyword = wcsdup(word);
         table->entries[index].isOccupied = 1;
     }
-
+    printHashTable(table);
     free(normalized);
 }
 
@@ -227,14 +257,55 @@ int compareEntries(const void *a, const void *b)
 // Imprime todas as palavras-chave e suas posições
 void printIndexHash(HashTable *table)
 {
+    // Primeiro, contamos quantas entradas ocupadas existem
+    int count = 0;
     for (int i = 0; i < table->size; i++)
     {
         if (table->entries[i].isOccupied == 1 && table->entries[i].keyword)
         {
-            printf("%ls: ", table->entries[i].keyword);
-            printPositionsHash(table->entries[i].positions);
+            count++;
         }
     }
+
+    // Criamos um array temporário para armazenar ponteiros para as entradas ocupadas
+    HashEntry **occupied = (HashEntry **)malloc(count * sizeof(HashEntry *));
+    if (occupied == NULL)
+    {
+        printf("Erro de alocação de memória\n");
+        return;
+    }
+
+    // Preenchemos o array com ponteiros para as entradas ocupadas
+    int index = 0;
+    for (int i = 0; i < table->size; i++)
+    {
+        if (table->entries[i].isOccupied == 1 && table->entries[i].keyword)
+        {
+            occupied[index++] = &(table->entries[i]);
+        }
+    }
+
+    // Ordenamos o array usando qsort e uma função de comparação
+    qsort(occupied, count, sizeof(HashEntry *), compareHashEntries);
+
+    // Imprimimos as entradas em ordem alfabética
+    for (int i = 0; i < count; i++)
+    {
+        printf("%ls: ", occupied[i]->keyword);
+        printPositionsHash(occupied[i]->positions);
+    }
+
+    // Liberamos a memória alocada
+    free(occupied);
+}
+
+// Função auxiliar para comparar duas entradas da tabela hash
+int compareHashEntries(const void *a, const void *b)
+{
+    HashEntry *entryA = *(HashEntry **)a;
+    HashEntry *entryB = *(HashEntry **)b;
+
+    return wcscmp(entryA->keyword, entryB->keyword);
 }
 
 // Libera a memória da tabela hash
