@@ -1,6 +1,6 @@
 #include "processamento.h"
 
-static wchar_t *normalizar_palavra(const wchar_t *palavra)
+wchar_t *normalizar_palavra(const wchar_t *palavra)
 {
     size_t len = wcslen(palavra);
     wchar_t *normalizada = malloc((len + 1) * sizeof(wchar_t));
@@ -13,7 +13,7 @@ static wchar_t *normalizar_palavra(const wchar_t *palavra)
     return normalizada;
 }
 
-static wchar_t **ler_palavras_chave(FILE *arquivo, int *num_palavras)
+wchar_t **ler_palavras_chave(FILE *arquivo, int *num_palavras)
 {
     wchar_t linha[256];
     wchar_t **palavras = NULL;
@@ -47,7 +47,7 @@ static wchar_t **ler_palavras_chave(FILE *arquivo, int *num_palavras)
     return palavras;
 }
 
-static wchar_t *ler_texto_completo(FILE *arquivo)
+wchar_t *ler_texto_completo(FILE *arquivo)
 {
     fseek(arquivo, 0, SEEK_END);
     long tamanho_bytes = ftell(arquivo);

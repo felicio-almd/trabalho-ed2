@@ -1,6 +1,6 @@
 #include "hash.h"
 
-int isPrime(int num)
+int ehPrimo(int num)
 {
     if (num < 2)
         return 0;
@@ -18,9 +18,9 @@ int isPrime(int num)
 }
 
 // Encontra o próximo número primo maior ou igual a "n"
-int nextPrime(int n)
+int proximoPrimoMaior(int n)
 {
-    while (!isPrime(n))
+    while (!ehPrimo(n))
     {
         n++;
     }
@@ -28,33 +28,41 @@ int nextPrime(int n)
 }
 
 // Função para criar uma nova tabela hash com tamanho primo
-HashTable *createHashTable(int size)
+HashTable *createHashTable(int tamanho)
 {
-    int primeSize = nextPrime(size); // Garante que o tamanho seja primo
+    int tamanhoPrimo = proximoPrimoMaior(tamanho); // Garante que o tamanho seja primo
 
     HashTable *table = (HashTable *)malloc(sizeof(HashTable));
-    table->size = primeSize;
-    table->entries = (HashEntry *)calloc(primeSize, sizeof(HashEntry));
+    table->size = tamanhoPrimo;
+    table->entries = (HashEntry *)calloc(tamanhoPrimo, sizeof(HashEntry));
 
     // Inicializa todas as entradas como vazias
-    for (int i = 0; i < primeSize; i++)
+    for (int i = 0; i < tamanhoPrimo; i++)
     {
         table->entries[i].keyword = NULL;
         table->entries[i].positions = NULL;
         table->entries[i].isOccupied = 0;
     }
 
-    printf("Criada tabela hash com tamanho primo: %d\n", primeSize);
+    printf("Criada tabela hash com tamanho primo: %d\n", tamanhoPrimo);
     return table;
 }
 
 // Função de hash para strings wide
+/*
+    Usa unsigned int evita ter valores negativos, assim so vai índices sempre válidos na tabela hash.
+    Melhora a compatibilidade com operações bitwise e % tableSize, prevenindo erros.
+    Amplia o intervalo de valores possíveis, ajudando na distribuição uniforme dos hashes.
+    Assegura eficiência e segurança ao acessar a tabela hash.
+*/
 unsigned int hashFunction(const wchar_t *str, int tableSize)
 {
+    // unsigned para usar so valores positivos
     unsigned int hash = 0;
 
     while (*str)
     {
+        // unsigned para usar so valores positivos
         hash = (hash * 31) + (unsigned int)(*str);
         str++;
     }

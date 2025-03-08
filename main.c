@@ -2,25 +2,62 @@
 #include "hash.h"
 #include "processamento.h"
 
-TrieNode *OpenTrie(wchar_t **palavras, int num)
+TrieNode *OpenTrie(wchar_t **palavras, int numPalavrasChave)
 {
-    TrieNode *root = createTrieNode();
-    for (int i = 0; i < num; i++)
+    TrieNode *raiz = createTrieNode();
+    for (int i = 0; i < numPalavrasChave; i++)
     {
-        insertKeyword(root, palavras[i]);
+        insertKeyword(raiz, palavras[i]);
     }
-    return root;
+    return raiz;
 }
 
-HashTable *OpenHash(wchar_t **palavras, int num){
-    HashTable *table = createHashTable(num);
-    for (int i = 0; i < num; ++i) {
-        insertKeywordHash(table,palavras[i]);
+HashTable *OpenHash(wchar_t **palavras, int numPalavrasChave)
+{
+    HashTable *table = createHashTable(numPalavrasChave);
+    for (int i = 0; i < numPalavrasChave; ++i)
+    {
+        insertKeywordHash(table, palavras[i]);
     }
     return table;
 }
 
-void exibirMenu() {
+void ProcessText(TrieNode *trie, HashTable *table, DadosProcessados *dados)
+{
+    wchar_t *texto = dados->texto;
+    size_t tamanhoTexto = wcslen(texto);
+    int posicaoLogica = 0;
+    for (size_t i = 0; i < tamanhoTexto;)
+    {
+        wchar_t palavra[256];
+        int tamanhoPalavra = 0;
+        size_t j;
+
+        for (j = i; j < tamanhoTexto && iswalpha(texto[j]) && tamanhoPalavra < 255; j++)
+        {
+            palavra[tamanhoPalavra++] = towlower(texto[j]);
+        }
+        palavra[tamanhoPalavra] = L'\0';
+        if (tamanhoPalavra > 0)
+        {
+            if (trie != NULL)
+            {
+                processTextTrie(trie, palavra, posicaoLogica, tamanhoPalavra);
+                i = i + tamanhoPalavra - 1;
+                posicaoLogica = posicaoLogica + tamanhoPalavra - 1;
+            }
+            if (table != NULL)
+            {
+                processTextHash(table, palavra, posicaoLogica);
+            }
+        }
+        posicaoLogica++;
+        i++;
+    }
+}
+
+void exibirMenu()
+{
     printf("\n===== SISTEMA DE ÍNDICE REMISSIVO =====\n");
     printf("1. Carregar arquivo de texto\n");
     printf("2. Criar índice remissivo (Tabela Hash)\n");
@@ -33,140 +70,140 @@ void exibirMenu() {
     printf("Escolha uma opção: ");
 }
 
-void ProcessText(TrieNode *trie, HashTable *table, DadosProcessados *dados){
-    wchar_t *text = dados->texto;
-    size_t textLen = wcslen(text);
-    int logicalPosition = 0;
-    for (size_t i = 0; i < textLen;) {
-        wchar_t word[256];
-        int wordLen = 0;
-        size_t j;
-
-        for (j = i; j < textLen && iswalpha(text[j]) && wordLen < 255; j++) {
-            word[wordLen++] = towlower(text[j]);
-        }
-        word[wordLen] = L'\0';
-        if (wordLen > 0) {
-            if (trie != NULL) {
-                processTextTrie(trie, word, logicalPosition, wordLen);
-                i = i + wordLen - 1;
-                logicalPosition = logicalPosition + wordLen - 1;
-            }
-            if (table != NULL) {
-                processTextHash(table, word, logicalPosition);
-            }
-        }
-        logicalPosition++;
-        i++;
-    }
-}
-
-
-
 int main()
 {
     setlocale(LC_ALL, "pt_BR.UTF-8");
     int opcao = -1;
-    char fileName[256];
-    char keyWordsName[256];
-    wchar_t keyword[256];
+    char arquivoTexto[256];
+    char arquivoPalavrasChave[256];
+    wchar_t palavraChave[256];
     DadosProcessados *dados = NULL;
-    TrieNode *root = NULL;
+    TrieNode *raiz = NULL;
     HashTable *table = NULL;
 
-    while (opcao != 0){
+    while (opcao != 0)
+    {
         exibirMenu();
         scanf("%d", &opcao);
-        switch (opcao) {
-            case 1:
-                printf("Digite o nome do arquivo de texto: ");
-                scanf("%s", fileName);
-                printf("Digite o nome do aruivo de palavras chave: ");
-                scanf("%s", keyWordsName);
-                dados = processar_arquivos(keyWordsName,fileName);
-                if(!dados){
-                    printf("erro nos dados dos arquivos.");
-                }else{
-                    printf("arquivos carregados com sucesso.");
-                }
-                break;
-            case 2:
-                if(dados){
-                    if(table){
-                        freeHashTable(table);
-                        table = NULL;
-                    }
-                    table = OpenHash(dados->palavras_chave,dados->num_palavras);
-                    ProcessText(NULL, table, dados);
-                    if(!table){
-                        printf("erro no indice remissivo com hash");
-                    }
-                }else{
-                    printf("por favor carregue nomes dos arquivos");
-                }
-                break;
-            case 3:
-                if(dados){
-                    if(root){
-                        freeTrie(root);
-                        root = NULL;
-                    }
-                    root = OpenTrie(dados->palavras_chave,dados->num_palavras);
-                    ProcessText(root, NULL, dados);
-                    if(!root){
-                        printf("erro no indice remissivo com arvore digital");
-                    }
-                }else{
-                    printf("por favor carregue nomes dos arquivos");
-                }
-                break;
-            case 4:
-                if(table){
-                    printf("Indice remissivo com Hash:\n");
-                    printIndexHash(table);
-                    printf("\n\n");
-                }else{
-                    printf("Não há tabela hash");
-                }
-                if(root){
-                    printf("Indice remissivo com arvore digital:\n");
-                    printIndex(root);
-                    printf("\n\n");
-                }else{
-                    printf("Não há arvore digital");
-                }
-                break;
-            case 5:
-                if(table){
-                    printHashTable(table);
-                } else{
-                    printf("Não há tabela hash");
-                }
-                break;
-            case 6:
-                if(root){
-                    printTrie(root,keyword,0,1);
-                }
-                break;
-            case 7:
-                if(table){
+        switch (opcao)
+        {
+        case 1:
+            printf("\nDigite o nome do arquivo de texto: ");
+            scanf("%s", arquivoTexto);
+            printf("\nDigite o nome do aruivo de palavras chave: ");
+            scanf("%s", arquivoPalavrasChave);
+            dados = processar_arquivos(arquivoPalavrasChave, arquivoTexto);
+            if (!dados)
+            {
+                printf("\nErro nos dados dos arquivos.\n\n");
+            }
+            else
+            {
+                printf("\nArquivos carregados com sucesso.\n");
+            }
+            break;
+        case 2:
+            if (dados)
+            {
+                if (table)
+                {
                     freeHashTable(table);
                     table = NULL;
                 }
-                if(root){
-                    freeTrie(root);
-                    root = NULL;
+                table = OpenHash(dados->palavras_chave, dados->num_palavras);
+                ProcessText(NULL, table, dados);
+                if (!table)
+                {
+                    printf("\nErro no indice remissivo com hash.\n");
                 }
-                break;
-            case 0:
-                printf("finalizando programa...");
-                break;
-            default:
-                printf("opcao invalida");
-                break;
+            }
+            else
+            {
+                printf("\nPor favor carregue nomes dos arquivos...\n\n");
+            }
+            break;
+        case 3:
+            if (dados)
+            {
+                if (raiz)
+                {
+                    freeTrie(raiz);
+                    raiz = NULL;
+                }
+                raiz = OpenTrie(dados->palavras_chave, dados->num_palavras);
+                ProcessText(raiz, NULL, dados);
+                if (!raiz)
+                {
+                    printf("\nErro no indice remissivo com arvore digital.\n");
+                }
+            }
+            else
+            {
+                printf("\nPor favor carregue nomes dos arquivos.\n");
+            }
+            break;
+        case 4:
+            if (table)
+            {
+                printf("\nIndice remissivo com Tabela Hash:\n");
+                printIndexHash(table);
+                printf("\n\n");
+            }
+            else
+            {
+                printf("\nNão há tabela hash.\n");
+            }
+            if (raiz)
+            {
+                printf("\nIndice remissivo com arvore digital:\n");
+                printIndex(raiz);
+                printf("\n\n");
+            }
+            else
+            {
+                printf("\nNão há Arvore Digital.\n");
+            }
+            break;
+        case 5:
+            if (table)
+            {
+                printHashTable(table);
+            }
+            else
+            {
+                printf("\nNão há tabela hash.\n");
+            }
+            break;
+        case 6:
+            if (raiz)
+            {
+                printTrie(raiz, palavraChave, 0, 1);
+            }
+            else
+            {
+                printf("\nNão há Arvore Digital.\n");
+            }
+            break;
+        case 7:
+            if (table)
+            {
+                freeHashTable(table);
+                table = NULL;
+            }
+            if (raiz)
+            {
+                freeTrie(raiz);
+                raiz = NULL;
+            }
+            break;
+        case 0:
+            printf("\nFinalizando programa...\n");
+            break;
+        default:
+            printf("\nOpção invalida.\n");
+            break;
         }
     }
-
 
     return 0;
 }
