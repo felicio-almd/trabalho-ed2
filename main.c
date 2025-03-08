@@ -52,13 +52,16 @@ int main()
         insertKeywordHash(table, keyword);
     }
     fclose(keyFile);
-    printHashTable(table);
 
     // Processa o arquivo de texto
     processTextHash(table, "texto.txt");
     printf("Imprimindo via tabela hash:\n\n");
     printIndexHash(table);
 
+    printf("\n\n");
+    printTrie(root, keyword, 0, 1);
+    printf("\n\n");
+    printHashTable(table);
     // Libera a memória
     freeTrie(root);
     freeHashTable(table);

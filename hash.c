@@ -94,14 +94,6 @@ void printHashTable(HashTable *table)
         if (entry->isOccupied == 1)
         {
             printf("Ocupado -> Palavra: \"%ls\"", entry->keyword);
-            PositionNodeHash *current = entry->positions;
-            while (current != NULL)
-            {
-                printf("%d", current->position);
-                current = current->next;
-                if (current != NULL)
-                    printf(", ");
-            }
             printf("\n");
         }
         else if (entry->isOccupied == -1)

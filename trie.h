@@ -32,6 +32,7 @@ void addPosition(PositionNode **head, int position);
 void processText(TrieNode *root, const char *filename);
 void printPositions(PositionNode *node);
 void printIndex(TrieNode *node);
+void printTrie(TrieNode *root, wchar_t *buffer, int depth, int indentation);
 void freeTrie(TrieNode *node);
 
 #endif // TRIE_H
