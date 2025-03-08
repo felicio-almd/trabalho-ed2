@@ -3,7 +3,6 @@
 // Função para obter o índice do caractere no trie
 int get_char_index(wchar_t c)
 {
-    wprintf(L"%lc", c);
     switch (c)
     {
     case L'á':
@@ -32,6 +31,8 @@ int get_char_index(wchar_t c)
         return 37;
     case L'ç':
         return 38;
+    case L'@':
+        return 39;
     default:
         if (c >= L'a' && c <= L'z')
             return c - L'a';
@@ -83,7 +84,6 @@ void insertKeyword(TrieNode *root, const wchar_t *word)
     free(normalized);
 }
 
-// essa tbm
 void addPosition(PositionNode **head, int position)
 {
     position++; // Começa do 1
@@ -123,7 +123,6 @@ void processTextTrie(TrieNode *root, wchar_t word[256], int logicalPosition, int
         }
         node = node->children[index];
     }
-    printf("\n");
     if (node && node->keyword)
     {
         addPosition(&node->positions, logicalPosition);
@@ -154,6 +153,93 @@ void printIndex(TrieNode *node)
     for (int i = 0; i < 128; i++)
     {
         printIndex(node->children[i]);
+    }
+}
+
+void printTrie(TrieNode *currentNode, wchar_t *currentPath, int currentDepth, int currentIndentation)
+{
+    if (!currentNode)
+        return;
+
+    // Se for um nó que representa uma palavra-chave
+    if (currentNode->keyword)
+    {
+        currentPath[currentDepth] = L'\0'; // Finaliza a string no caminho atual
+        for (int i = 0; i < currentIndentation - 1; i++)
+            printf("  ");
+        printf("  (palavra: %ls)", currentNode->keyword);
+
+        printf("\n");
+    }
+
+    // Percorre todos os possíveis caracteres (incluindo acentuados)
+    for (int i = 0; i < 128; i++)
+    {
+        if (currentNode->children[i])
+        {
+            // Descobre qual caractere corresponde ao índice
+            wchar_t currentChar = L' ';
+            if (i >= 0 && i < 26)
+            {
+                currentChar = L'a' + i; // Caracteres de 'a' a 'z'
+            }
+            else
+            {
+                // Mapeia caracteres acentuados baseado na lógica inversa de get_char_index
+                switch (i)
+                {
+                case 26:
+                    currentChar = L'á';
+                    break;
+                case 27:
+                    currentChar = L'à';
+                    break;
+                case 28:
+                    currentChar = L'ã';
+                    break;
+                case 29:
+                    currentChar = L'â';
+                    break;
+                case 30:
+                    currentChar = L'é';
+                    break;
+                case 31:
+                    currentChar = L'ê';
+                    break;
+                case 32:
+                    currentChar = L'í';
+                    break;
+                case 33:
+                    currentChar = L'ó';
+                    break;
+                case 34:
+                    currentChar = L'ô';
+                    break;
+                case 35:
+                    currentChar = L'õ';
+                    break;
+                case 36:
+                    currentChar = L'ú';
+                    break;
+                case 37:
+                    currentChar = L'ü';
+                    break;
+                case 38:
+                    currentChar = L'ç';
+                    break;
+                }
+            }
+
+            currentPath[currentDepth] = currentChar; // Adiciona o caractere ao caminho atual
+
+            // Imprime a estrutura hierárquica
+            for (int j = 0; j < currentIndentation; j++)
+                printf("  ");
+            printf("|- %lc\n", currentChar);
+
+            // Chamada recursiva para o próximo nó
+            printTrie(currentNode->children[i], currentPath, currentDepth + 1, currentIndentation + 1);
+        }
     }
 }
 

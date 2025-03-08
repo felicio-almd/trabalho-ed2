@@ -24,7 +24,16 @@ static wchar_t **ler_palavras_chave(FILE *arquivo, int *num_palavras)
 
     while (fgetws(linha, 256, arquivo))
     {
-        // Mantém a quebra de linha original se existir
+        // Remove quebra de linha
+        size_t len = wcslen(linha);
+        for (size_t i = 0; i < len; i++)
+        {
+            if (linha[i] == L'\n' || linha[i] == L'\r')
+            {
+                linha[i] = L'\0';
+                break;
+            }
+        }
         if (contador >= capacidade)
         {
             capacidade *= 2;
