@@ -7,9 +7,11 @@
 #include <wchar.h>
 #include <wctype.h>
 #include <locale.h>
+#include "trie.h"
+#include "processamento.h"
 
 void ProcessamentoInicial(int type, const char *filename);
-void ProcessTextG(int type, const char *filename);
-TrieNode OpenTrie();
+TrieNode *processText(char buscaType[5], const char *filename);
+TrieNode *OpenTrie(wchar_t **palavras, int num);
 
 #endif

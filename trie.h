@@ -29,7 +29,7 @@ TrieNode *createTrieNode();
 int get_char_index(wchar_t c);
 void insertKeyword(TrieNode *root, const wchar_t *word);
 void addPosition(PositionNode **head, int position);
-void processText(TrieNode *root, wchar_t word; int logicalPosition);
+void processTextTrie(TrieNode *root, wchar_t word[256], int logicalPosition, int wordLen);
 void printPositions(PositionNode *node);
 void printIndex(TrieNode *node);
 void freeTrie(TrieNode *node);

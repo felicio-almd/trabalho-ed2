@@ -3,6 +3,7 @@
 // Função para obter o índice do caractere no trie
 int get_char_index(wchar_t c)
 {
+    wprintf(L"%lc", c);
     switch (c)
     {
     case L'á':
@@ -107,9 +108,11 @@ void addPosition(PositionNode **head, int position)
     current->next = newNode;
 }
 
-void processText(TrieNode *root, wchar_t word; int logicalPosition)
+void processTextTrie(TrieNode *root, wchar_t word[256], int logicalPosition, int wordLen)
 {
+    TrieNode *node;
     node = root;
+
     for (size_t k = 0; k < wordLen; k++)
     {
         int index = get_char_index(word[k]);
@@ -120,7 +123,7 @@ void processText(TrieNode *root, wchar_t word; int logicalPosition)
         }
         node = node->children[index];
     }
-
+    printf("\n");
     if (node && node->keyword)
     {
         addPosition(&node->positions, logicalPosition);

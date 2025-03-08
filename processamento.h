@@ -17,9 +17,11 @@ typedef struct
 } DadosProcessados;
 
 // Protótipos das funções
+static wchar_t *normalizar_palavra(const wchar_t *palavra);
+static wchar_t **ler_palavras_chave(FILE *arquivo, int *num_palavras);
+static wchar_t *ler_texto_completo(FILE *arquivo);
 DadosProcessados *processar_arquivos(const char *arquivo_palavras, const char *arquivo_texto);
-void liberar_dados(DadosProcessados *dados);
 void testar_leituras(const char *arquivo_palavras, const char *arquivo_texto);
-wchar_t *ler_arquivo(const char *nome_arquivo);
+void liberar_dados(DadosProcessados *dados);
 
 #endif

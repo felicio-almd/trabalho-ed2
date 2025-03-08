@@ -2,34 +2,32 @@
 #include "processamento.h"
 #include "trie.h"
 
-TrieNode OpenTrie()
+TrieNode *OpenTrie(wchar_t **palavras, int num)
 {
     TrieNode *root = createTrieNode();
-    FILE *keyFile = fopen("palavras_chave.txt", "r");
-    if (!keyFile)
+    for (int i = 0; i < num; i++)
     {
-        perror("Erro ao abrir arquivo de palavras-chave");
-        return;
+        insertKeyword(root, palavras[i]);
     }
-
-    wchar_t keyword[256];
-    while (fwscanf(keyFile, L"%255ls", keyword) == 1)
-    {
-        insertKeyword(root, keyword);
-    }
-    fclose(keyFile);
-
-    return *root;
+    return root;
 }
 
-void ProcessTextG(int type, char buscaType, const char *filename)
+TrieNode *processText(char buscaType[5], const char *filename)
 {
-    wchar_t *text = ler_arquivo(filename);
+    DadosProcessados *dados = processar_arquivos("palavras_chave.txt",filename);
+    if(!dados){
+        return NULL;
+    }
+    wchar_t *text = dados->texto;
     size_t textLen = wcslen(text);
-    int logicalposition = 0;
-    if (buscaType = "trie")
-    {
-        TrieNode *root = OpenTrie();
+    int logicalPosition = 0;
+    int trie = 0;
+    TrieNode *root;
+    if (strcmp(buscaType, "trie") == 0){
+        trie = 1;
+        root = OpenTrie(dados->palavras_chave,dados->num_palavras);
+    }else if(strcmp(buscaType, "hash") == 0){
+        return NULL;
     }
     for (size_t i = 0; i < textLen;)
     {
@@ -42,8 +40,15 @@ void ProcessTextG(int type, char buscaType, const char *filename)
             word[wordLen++] = towlower(text[j]);
         }
         word[wordLen] = L'\0';
-        if (word)
-            logicalposition++;
+        if(wordLen>0){
+            if(trie == 1){
+                processTextTrie(root, word, logicalPosition, wordLen);
+                i = i+wordLen-1;
+                logicalPosition = logicalPosition+wordLen-1;
+            }
+        }
+        logicalPosition++;
         i++;
     }
+    return root;
 }
