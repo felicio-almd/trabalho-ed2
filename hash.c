@@ -44,7 +44,7 @@ HashTable *createHashTable(int size)
         table->entries[i].isOccupied = 0;
     }
 
-    printf("🟢 Criada tabela hash com tamanho primo: %d\n", primeSize);
+    printf("Criada tabela hash com tamanho primo: %d\n", primeSize);
     return table;
 }
 
@@ -216,50 +216,13 @@ HashEntry *findKeywordHash(HashTable *table, const wchar_t *word)
 }
 
 // Função para processar o texto e adicionar as posições das palavras-chave
-void processTextHash(HashTable *table, const char *filename)
+void processTextHash(HashTable *table, wchar_t word[256], int logicalPosition)
 {
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    HashEntry *entry = findKeywordHash(table, word);
+    if (entry)
     {
-        perror("Erro ao abrir arquivo de texto");
-        exit(1);
+        addPositionHash(&entry->positions, logicalPosition);
     }
-
-    int logicalPosition = 0;
-    wchar_t buffer[1024];
-
-    while (fgetws(buffer, sizeof(buffer) / sizeof(wchar_t), file))
-    {
-        size_t lineLen = wcslen(buffer);
-
-        for (size_t i = 0; i < lineLen;)
-        {
-            wchar_t wordBuffer[256];
-            int wordLen = 0;
-            size_t j;
-
-            // Coleta a palavra mantendo os acentos
-            for (j = i; j < lineLen && iswalpha(buffer[j]) && wordLen < 255; j++)
-            {
-                wordBuffer[wordLen++] = towlower(buffer[j]);
-            }
-            wordBuffer[wordLen] = L'\0';
-
-            if (wordLen > 0)
-            {
-                HashEntry *entry = findKeywordHash(table, wordBuffer);
-                if (entry)
-                {
-                    addPositionHash(&entry->positions, logicalPosition);
-                }
-            }
-
-            logicalPosition++;
-            i++;
-        }
-    }
-
-    fclose(file);
 }
 
 // Imprime as posições de uma palavra
