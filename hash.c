@@ -1,20 +1,50 @@
 #include "hash.h"
 
-// Função para criar uma nova tabela hash
+int isPrime(int num)
+{
+    if (num < 2)
+        return 0;
+    if (num == 2 || num == 3)
+        return 1;
+    if (num % 2 == 0 || num % 3 == 0)
+        return 0;
+
+    for (int i = 5; i * i <= num; i += 6)
+    {
+        if (num % i == 0 || num % (i + 2) == 0)
+            return 0;
+    }
+    return 1;
+}
+
+// Encontra o próximo número primo maior ou igual a "n"
+int nextPrime(int n)
+{
+    while (!isPrime(n))
+    {
+        n++;
+    }
+    return n;
+}
+
+// Função para criar uma nova tabela hash com tamanho primo
 HashTable *createHashTable(int size)
 {
+    int primeSize = nextPrime(size); // Garante que o tamanho seja primo
+
     HashTable *table = (HashTable *)malloc(sizeof(HashTable));
-    table->size = size;
-    table->entries = (HashEntry *)calloc(size, sizeof(HashEntry));
+    table->size = primeSize;
+    table->entries = (HashEntry *)calloc(primeSize, sizeof(HashEntry));
 
     // Inicializa todas as entradas como vazias
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < primeSize; i++)
     {
         table->entries[i].keyword = NULL;
         table->entries[i].positions = NULL;
         table->entries[i].isOccupied = 0;
     }
 
+    printf("🟢 Criada tabela hash com tamanho primo: %d\n", primeSize);
     return table;
 }
 
@@ -49,30 +79,38 @@ wchar_t *normalizeWord(const wchar_t *word)
 
 void printHashTable(HashTable *table)
 {
-    if (table == NULL || table->entries == NULL)
+    if (table == NULL)
     {
-        wprintf(L"Tabela hash inválida!\n");
+        printf("Tabela hash não existe.\n");
         return;
     }
 
+    printf("Tabela Hash (Tamanho: %d):\n", table->size);
     for (int i = 0; i < table->size; i++)
     {
-        HashEntry entry = table->entries[i];
+        HashEntry *entry = &table->entries[i];
+        printf("[%4d] ", i); // Formatação para índices de até 4 dígitos
 
-        if (entry.isOccupied == 1)
+        if (entry->isOccupied == 1)
         {
-            // Entrada ocupada com palavra-chave
-            wprintf(L"Índice %d: [OCUPADO]  %ls\n", i, entry.keyword);
+            printf("Ocupado -> Palavra: \"%ls\"", entry->keyword);
+            PositionNodeHash *current = entry->positions;
+            while (current != NULL)
+            {
+                printf("%d", current->position);
+                current = current->next;
+                if (current != NULL)
+                    printf(", ");
+            }
+            printf("\n");
         }
-        else if (entry.isOccupied == -1)
+        else if (entry->isOccupied == -1)
         {
-            // Entrada marcada como removida (tombstone)
-            wprintf(L"Índice %d: [REMOVIDO]\n", i);
+            printf("Removido\n");
         }
         else
         {
-            // Entrada livre
-            wprintf(L"Índice %d: [LIVRE]\n", i);
+            printf("Livre\n");
         }
     }
 }
@@ -114,10 +152,9 @@ void insertKeywordHash(HashTable *table, const wchar_t *word)
             free(table->entries[index].keyword);
         }
 
-        table->entries[index].keyword = wcsdup(word);
+        table->entries[index].keyword = wcsdup(normalized);
         table->entries[index].isOccupied = 1;
     }
-    printHashTable(table);
     free(normalized);
 }
 
@@ -246,11 +283,12 @@ void printPositionsHash(PositionNodeHash *node)
     printf("\n");
 }
 
-// Função de comparação para qsort
-int compareEntries(const void *a, const void *b)
+// Função auxiliar para comparar duas entradas da tabela hash
+int compareHashEntries(const void *a, const void *b)
 {
     HashEntry *entryA = *(HashEntry **)a;
     HashEntry *entryB = *(HashEntry **)b;
+
     return wcscmp(entryA->keyword, entryB->keyword);
 }
 
@@ -297,15 +335,6 @@ void printIndexHash(HashTable *table)
 
     // Liberamos a memória alocada
     free(occupied);
-}
-
-// Função auxiliar para comparar duas entradas da tabela hash
-int compareHashEntries(const void *a, const void *b)
-{
-    HashEntry *entryA = *(HashEntry **)a;
-    HashEntry *entryB = *(HashEntry **)b;
-
-    return wcscmp(entryA->keyword, entryB->keyword);
 }
 
 // Libera a memória da tabela hash

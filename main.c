@@ -4,18 +4,25 @@
 int main()
 {
     setlocale(LC_ALL, "pt_BR.UTF-8");
+    int tamanho = 0;
+    FILE *keyFile = fopen("palavras_chave.txt", "r");
+    wchar_t keyword[256];
+
+    while (fwscanf(keyFile, L"%255ls", keyword) == 1)
+    { /* Palavras-Chaves = Número de linhas; */
+        tamanho++;
+    }
 
     // --------------- IMPLEMENTAÇÃO COM TRIE ---------------
     printf("=== IMPLEMENTAÇÃO COM TRIE ===\n");
     TrieNode *root = createTrieNode();
-    FILE *keyFile = fopen("palavras_chave.txt", "r");
+    keyFile = fopen("palavras_chave.txt", "r");
     if (!keyFile)
     {
         perror("Erro ao abrir arquivo de palavras-chave");
         return 1;
     }
 
-    wchar_t keyword[256];
     while (fwscanf(keyFile, L"%255ls", keyword) == 1)
     {
         insertKeyword(root, keyword);
@@ -28,7 +35,7 @@ int main()
 
     // --------------- IMPLEMENTAÇÃO COM HASH ---------------
     printf("\n=== IMPLEMENTAÇÃO COM TABELA HASH ===\n");
-    HashTable *table = createHashTable(101); // Tamanho primo da tabela
+    HashTable *table = createHashTable(tamanho); // Tamanho primo da tabela
 
     // Lê o arquivo de palavras-chave novamente
     keyFile = fopen("palavras_chave.txt", "r");
@@ -45,6 +52,7 @@ int main()
         insertKeywordHash(table, keyword);
     }
     fclose(keyFile);
+    printHashTable(table);
 
     // Processa o arquivo de texto
     processTextHash(table, "texto.txt");
