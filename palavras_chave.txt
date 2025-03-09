@@ -1,8 +1,6 @@
 literatura
-classica
-grandes
-romantismo
-pais
-nos
-nós
 clássica
+brasileira
+país
+realismo
+gerações
