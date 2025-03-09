@@ -1,6 +1,6 @@
 #include "processamento.h"
 
-wchar_t *normalizar_palavra(const wchar_t *palavra)
+wchar_t *normalizarPalavra(const wchar_t *palavra)
 {
     size_t len = wcslen(palavra);
     wchar_t *normalizada = malloc((len + 1) * sizeof(wchar_t));
@@ -13,117 +13,104 @@ wchar_t *normalizar_palavra(const wchar_t *palavra)
     return normalizada;
 }
 
-wchar_t **ler_palavras_chave(FILE *arquivo, int *num_palavras)
+wchar_t **lerPalavrasChave(FILE *arquivo, int *numPalavras)
 {
-    wchar_t linha[256];
+    wchar_t linha[1000];
     wchar_t **palavras = NULL;
     int capacidade = 10;
     int contador = 0;
 
     palavras = malloc(capacidade * sizeof(wchar_t *));
 
-    while (fgetws(linha, 256, arquivo))
+    // lê uma linha do arquivo e a armazena no array linha enquanto tiver linhas no arquivo
+    while (fgetws(linha, 1000, arquivo))
     {
         // Remove quebra de linha
         size_t len = wcslen(linha);
         for (size_t i = 0; i < len; i++)
         {
-            if (linha[i] == L'\n' || linha[i] == L'\r')
+            // se tiver quebra de linha, acabar o arquivo ou tiver um ponto, remove caractere
+            if (linha[i] == L'\n' || linha[i] == L'\r' || linha[i] == L'.')
             {
                 linha[i] = L'\0';
                 break;
             }
         }
+        // para garantir que não irá faltar espaço
         if (contador >= capacidade)
         {
             capacidade *= 2;
             palavras = realloc(palavras, capacidade * sizeof(wchar_t *));
         }
-        palavras[contador] = normalizar_palavra(linha);
+        palavras[contador] = normalizarPalavra(linha);
         contador++;
     }
 
-    *num_palavras = contador;
+    *numPalavras = contador;
     return palavras;
 }
 
-wchar_t *ler_texto_completo(FILE *arquivo)
+wchar_t *lerTextoCompleto(FILE *arquivo)
 {
     fseek(arquivo, 0, SEEK_END);
-    long tamanho_bytes = ftell(arquivo);
+    long tamanhoBytes = ftell(arquivo);
     fseek(arquivo, 0, SEEK_SET);
 
-    // Ler como bytes brutos primeiro
-    char *buffer = malloc(tamanho_bytes + 1);
-    fread(buffer, 1, tamanho_bytes, arquivo);
-    buffer[tamanho_bytes] = '\0';
+    // Le como bytes brutos primeiro
+    char *buffer = malloc(tamanhoBytes + 1);
+    fread(buffer, 1, tamanhoBytes, arquivo);
+    buffer[tamanhoBytes] = '\0';
 
-    // Converter para wide string
+    // Converte para wide string pela lib
     size_t tamanho_wchar = mbstowcs(NULL, buffer, 0) + 1;
     wchar_t *texto = malloc(tamanho_wchar * sizeof(wchar_t));
-    mbstowcs(texto, buffer, tamanho_bytes);
+    mbstowcs(texto, buffer, tamanhoBytes);
 
     free(buffer);
     return texto;
 }
 
-DadosProcessados *processar_arquivos(const char *arquivo_palavras, const char *arquivo_texto)
+// Vai abrir e ler os arquivos
+DadosProcessados *processarArquivos(const char *arquivo_palavras, const char *arquivo_texto)
 {
     DadosProcessados *dados = malloc(sizeof(DadosProcessados));
 
-    // Processar palavras-chave
-    FILE *fp_palavras = fopen(arquivo_palavras, "r");
-    if (!fp_palavras)
+    // Processar palavras-chave abrindo o arquivo
+    FILE *arqPalavrasChave = fopen(arquivo_palavras, "r");
+    if (!arqPalavrasChave)
     {
         perror("Erro ao abrir arquivo de palavras-chave");
         free(dados);
         return NULL;
     }
-    dados->palavras_chave = ler_palavras_chave(fp_palavras, &dados->num_palavras);
-    fclose(fp_palavras);
 
-    // Processar texto completo com espaços
-    FILE *fp_texto = fopen(arquivo_texto, "r");
-    if (!fp_texto)
+    dados->palavrasChave = lerPalavrasChave(arqPalavrasChave, &dados->numPalavras);
+    fclose(arqPalavrasChave);
+
+    // Processar texto completo com espaços e caracteres
+    FILE *arqTexto = fopen(arquivo_texto, "r");
+    if (!arqTexto)
     {
         perror("Erro ao abrir arquivo de texto");
-        free(dados->palavras_chave);
+        free(dados->palavrasChave);
         free(dados);
         return NULL;
     }
-    dados->texto = ler_texto_completo(fp_texto);
-    fclose(fp_texto);
+    dados->texto = lerTextoCompleto(arqTexto);
+    fclose(arqTexto);
 
     return dados;
 }
 
-void testar_leituras(const char *arquivo_palavras, const char *arquivo_texto)
-{
-    DadosProcessados *dados = processar_arquivos(arquivo_palavras, arquivo_texto);
-    if (!dados)
-        return;
-
-    wprintf(L"\n=== PALAVRAS-CHAVE ===\n");
-    for (int i = 0; i < dados->num_palavras; i++)
-    {
-        wprintf(L"Palavra %d: %ls", i + 1, dados->palavras_chave[i]);
-    }
-
-    wprintf(L"\n=== TEXTO COMPLETO ===\n");
-    wprintf(L"%ls\n", dados->texto);
-
-    liberar_dados(dados);
-}
-
-void liberar_dados(DadosProcessados *dados)
+void liberarDados(DadosProcessados *dados)
 {
     if (dados)
     {
-        for (int i = 0; i < dados->num_palavras; i++)
+        for (int i = 0; i < dados->numPalavras; i++)
         {
-            free(dados->palavras_chave[i]);
+            free(dados->palavrasChave[i]);
         }
-        free(dados->palavras_chave);
+        free(dados->palavrasChave);
         free(dados->texto);
         free(dados);
     }

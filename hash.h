@@ -142,4 +142,41 @@ void freeTabelaHash(TabelaHash *tabela);
 */
 int compararEntradasHash(const void *a, const void *b);
 
+/*
+    Função: ehPrimo
+    Parâmetros:
+        num: (Inteiro representando o número a ser verificado)
+    Objetivo: Verifica se um número é primo.
+    Retorna 1 se o número for primo, 0 caso contrário.
+*/
+int ehPrimo(int num);
+
+/*
+    Função: proximoPrimoMaior
+    Parâmetros:
+        n: (Inteiro representando o número a partir do qual se busca o próximo primo)
+    Objetivo: Encontra o próximo número primo maior ou igual a "n".
+    Retorna o próximo número primo.
+*/
+int proximoPrimoMaior(int n);
+
+/*
+    Função: normalizeWord
+    Parâmetros:
+        palavra: (Ponteiro para a string wide character a ser normalizada)
+    Objetivo: Normaliza uma palavra (converte para minúsculo).
+    Retorna um ponteiro para a string normalizada.
+*/
+wchar_t *normalizeWord(const wchar_t *palavra);
+
+/*
+    Função: findKeywordHash
+    Parâmetros:
+        tabela: (Ponteiro para a estrutura TabelaHash onde a palavra será buscada)
+        palavra: (Ponteiro para a string wide character a ser buscada)
+    Objetivo: Busca uma palavra na tabela hash.
+    Retorna um ponteiro para a entrada da tabela hash correspondente à palavra, ou NULL se não encontrada.
+*/
+EntradaHash *findKeywordHash(TabelaHash *tabela, const wchar_t *palavra);
+
 #endif /* HASH_H */

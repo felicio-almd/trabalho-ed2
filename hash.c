@@ -28,83 +28,83 @@ int proximoPrimoMaior(int n)
 }
 
 // Função para criar uma nova tabela hash com tamanho primo
-HashTable *createHashTable(int tamanho)
+TabelaHash *criarTabelaHash(int tamanho)
 {
     int tamanhoPrimo = proximoPrimoMaior(tamanho); // Garante que o tamanho seja primo
 
-    HashTable *table = (HashTable *)malloc(sizeof(HashTable));
-    table->size = tamanhoPrimo;
-    table->entries = (HashEntry *)calloc(tamanhoPrimo, sizeof(HashEntry));
+    TabelaHash *tabela = (TabelaHash *)malloc(sizeof(TabelaHash));
+    tabela->tamanho = tamanhoPrimo;
+    tabela->entradas = (EntradaHash *)calloc(tamanhoPrimo, sizeof(EntradaHash));
 
     // Inicializa todas as entradas como vazias
     for (int i = 0; i < tamanhoPrimo; i++)
     {
-        table->entries[i].keyword = NULL;
-        table->entries[i].positions = NULL;
-        table->entries[i].isOccupied = 0;
+        tabela->entradas[i].palavraChave = NULL;
+        tabela->entradas[i].posicoesHash = NULL;
+        tabela->entradas[i].ocupado = 0;
     }
 
     printf("Criada tabela hash com tamanho primo: %d\n", tamanhoPrimo);
-    return table;
+    return tabela;
 }
 
 // Função de hash para strings wide
 /*
     Usa unsigned int evita ter valores negativos, assim so vai índices sempre válidos na tabela hash.
-    Melhora a compatibilidade com operações bitwise e % tableSize, prevenindo erros.
+    Melhora a compatibilidade com operações bitwise e % tamanhoTabela, prevenindo erros.
     Amplia o intervalo de valores possíveis, ajudando na distribuição uniforme dos hashes.
     Assegura eficiência e segurança ao acessar a tabela hash.
 */
-unsigned int hashFunction(const wchar_t *str, int tableSize)
+unsigned int funcaoHash(const wchar_t *string, int tamanhoTabela)
 {
     // unsigned para usar so valores positivos
     unsigned int hash = 0;
 
-    while (*str)
+    while (*string)
     {
         // unsigned para usar so valores positivos
-        hash = (hash * 31) + (unsigned int)(*str);
-        str++;
+        hash = (hash * 31) + (unsigned int)(*string);
+        string++;
     }
 
-    return hash % tableSize;
+    return hash % tamanhoTabela;
 }
 
 // Função para normalizar uma palavra (converter para minúsculo)
-wchar_t *normalizeWord(const wchar_t *word)
+wchar_t *normalizeWord(const wchar_t *palavra)
 {
-    size_t len = wcslen(word);
-    wchar_t *normalized = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
+    size_t tamanho = wcslen(palavra);
+    wchar_t *normalizada = (wchar_t *)malloc((tamanho + 1) * sizeof(wchar_t));
 
-    for (size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < tamanho; i++)
     {
-        normalized[i] = towlower(word[i]);
+        normalizada[i] = towlower(palavra[i]);
     }
-    normalized[len] = L'\0';
+    normalizada[tamanho] = L'\0';
 
-    return normalized;
+    return normalizada;
 }
 
-void printHashTable(HashTable *table)
+void imprimirTabelaHash(TabelaHash *tabela)
 {
-    if (table == NULL)
+    if (tabela == NULL)
     {
         printf("Tabela hash não existe.\n");
         return;
     }
 
-    printf("Tabela Hash (Tamanho: %d):\n", table->size);
-    for (int i = 0; i < table->size; i++)
+    printf("Tabela Hash (Tamanho: %d):\n", tabela->tamanho);
+    for (int i = 0; i < tabela->tamanho; i++)
     {
-        HashEntry *entry = &table->entries[i];
+        EntradaHash *entry = &tabela->entradas[i];
         printf("[%4d] ", i); // Formatação para índices de até 4 dígitos
 
-        if (entry->isOccupied == 1)
+        if (entry->ocupado == 1)
         {
-            printf("Ocupado -> Palavra: \"%ls\"", entry->keyword);
+            printf("Ocupado -> Palavra: \"%ls\"", entry->palavraChave);
             printf("\n");
         }
-        else if (entry->isOccupied == -1)
+        else if (entry->ocupado == -1)
         {
             printf("Removido\n");
         }
@@ -116,19 +116,19 @@ void printHashTable(HashTable *table)
 }
 
 // Função para inserir uma palavra-chave na tabela hash
-void insertKeywordHash(HashTable *table, const wchar_t *word)
+void inserirPalavraChaveHash(TabelaHash *table, const wchar_t *word)
 {
     wchar_t *normalized = normalizeWord(word);
-    unsigned int index = hashFunction(normalized, table->size);
+    unsigned int index = funcaoHash(normalized, table->tamanho);
     int originalIndex = index;
 
     // Procura uma posição livre usando hashing linear
-    while (table->entries[index].isOccupied == 1 &&
-           (table->entries[index].keyword == NULL ||
-            wcscmp(table->entries[index].keyword, normalized) != 0))
+    while (table->entradas[index].ocupado == 1 &&
+           (table->entradas[index].palavraChave == NULL ||
+            wcscmp(table->entradas[index].palavraChave, normalized) != 0))
     {
         // Próxima posição (hashing linear)
-        index = (index + 1) % table->size;
+        index = (index + 1) % table->tamanho;
 
         // Se der a volta completa, a tabela está cheia
         if (index == originalIndex)
@@ -140,77 +140,76 @@ void insertKeywordHash(HashTable *table, const wchar_t *word)
     }
 
     // Se encontrou uma posição com a mesma palavra ou uma posição livre
-    if (table->entries[index].isOccupied == 0 ||
-        table->entries[index].isOccupied == -1 ||
-        (table->entries[index].keyword != NULL &&
-         wcscmp(table->entries[index].keyword, normalized) == 0))
+    if (table->entradas[index].ocupado == 0 ||
+        table->entradas[index].ocupado == -1 ||
+        (table->entradas[index].palavraChave != NULL &&
+         wcscmp(table->entradas[index].palavraChave, normalized) == 0))
     {
 
         // Libera a palavra anterior se estiver ocupada
-        if (table->entries[index].isOccupied == 1 && table->entries[index].keyword != NULL)
+        if (table->entradas[index].ocupado == 1 && table->entradas[index].palavraChave != NULL)
         {
-            free(table->entries[index].keyword);
+            free(table->entradas[index].palavraChave);
         }
 
-        table->entries[index].keyword = wcsdup(normalized);
-        table->entries[index].isOccupied = 1;
+        table->entradas[index].palavraChave = wcsdup(normalized);
+        table->entradas[index].ocupado = 1;
     }
     free(normalized);
 }
 
 // Função para adicionar uma posição à lista de posições
-void addPositionHash(PositionNodeHash **head, int position)
+void adicionarPosicaoHash(NoPosicaoHash **cabeca, int posicaoHash)
 {
-    position++; // Começa do 1
+    posicaoHash++; // Começa do 1
 
-    PositionNodeHash *newNode = (PositionNodeHash *)malloc(sizeof(PositionNodeHash));
-    newNode->position = position;
+    NoPosicaoHash *newNode = (NoPosicaoHash *)malloc(sizeof(NoPosicaoHash));
+    newNode->posicaoHash = posicaoHash;
 
-    if (*head == NULL || (*head)->position > position)
+    if (*cabeca == NULL || (*cabeca)->posicaoHash > posicaoHash)
     {
-        newNode->next = *head;
-        *head = newNode;
+        newNode->proximo = *cabeca;
+        *cabeca = newNode;
         return;
     }
 
-    PositionNodeHash *current = *head;
-    while (current->next != NULL && current->next->position < position)
+    NoPosicaoHash *current = *cabeca;
+    while (current->proximo != NULL && current->proximo->posicaoHash < posicaoHash)
     {
-        current = current->next;
+        current = current->proximo;
     }
 
     // Verifica se a posição já existe
-    if (current->position == position)
+    if (current->posicaoHash == posicaoHash)
     {
         free(newNode);
         return;
     }
-
     // Insere ordenadamente
-    newNode->next = current->next;
-    current->next = newNode;
+    newNode->proximo = current->proximo;
+    current->proximo = newNode;
 }
 
 // Função para buscar uma palavra na tabela hash
-HashEntry *findKeywordHash(HashTable *table, const wchar_t *word)
+EntradaHash *findKeywordHash(TabelaHash *tabela, const wchar_t *palavra)
 {
-    wchar_t *normalized = normalizeWord(word);
-    unsigned int index = hashFunction(normalized, table->size);
+    wchar_t *palavraNormalizada = normalizeWord(palavra);
+    unsigned int index = funcaoHash(palavraNormalizada, tabela->tamanho);
     int originalIndex = index;
 
     // Procura a palavra usando hashing linear
-    while (table->entries[index].isOccupied != 0)
+    while (tabela->entradas[index].ocupado != 0)
     {
-        if (table->entries[index].isOccupied == 1 &&
-            table->entries[index].keyword != NULL &&
-            wcscmp(normalizeWord(table->entries[index].keyword), normalized) == 0)
+        if (tabela->entradas[index].ocupado == 1 &&
+            tabela->entradas[index].palavraChave != NULL &&
+            wcscmp(normalizeWord(tabela->entradas[index].palavraChave), palavraNormalizada) == 0)
         {
-            free(normalized);
-            return &table->entries[index];
+            free(palavraNormalizada);
+            return &tabela->entradas[index];
         }
 
         // Próxima posição (hashing linear)
-        index = (index + 1) % table->size;
+        index = (index + 1) % tabela->tamanho;
 
         // Se der a volta completa, a palavra não está na tabela
         if (index == originalIndex)
@@ -219,106 +218,101 @@ HashEntry *findKeywordHash(HashTable *table, const wchar_t *word)
         }
     }
 
-    free(normalized);
+    free(palavraNormalizada);
     return NULL;
 }
 
 // Função para processar o texto e adicionar as posições das palavras-chave
-void processTextHash(HashTable *table, wchar_t word[256], int logicalPosition)
+void processarTextoHash(TabelaHash *tabela, wchar_t palavra[1000], int posicaoLogica)
 {
-    HashEntry *entry = findKeywordHash(table, word);
+    EntradaHash *entry = findKeywordHash(tabela, palavra);
     if (entry)
     {
-        addPositionHash(&entry->positions, logicalPosition);
+        adicionarPosicaoHash(&entry->posicoesHash, posicaoLogica);
     }
 }
 
 // Imprime as posições de uma palavra
-void printPositionsHash(PositionNodeHash *node)
+void imprimirPosicoesHash(NoPosicaoHash *no)
 {
-    while (node)
+    while (no)
     {
-        printf("%d", node->position);
-        node = node->next;
-        if (node)
+        printf("%d", no->posicaoHash);
+        no = no->proximo;
+        if (no)
             printf(" ");
     }
     printf("\n");
 }
 
 // Função auxiliar para comparar duas entradas da tabela hash
-int compareHashEntries(const void *a, const void *b)
+int compararEntradasHash(const void *a, const void *b)
 {
-    HashEntry *entryA = *(HashEntry **)a;
-    HashEntry *entryB = *(HashEntry **)b;
+    EntradaHash *entryA = *(EntradaHash **)a;
+    EntradaHash *entryB = *(EntradaHash **)b;
 
-    return wcscmp(entryA->keyword, entryB->keyword);
+    return wcscmp(entryA->palavraChave, entryB->palavraChave);
 }
 
 // Imprime todas as palavras-chave e suas posições
-void printIndexHash(HashTable *table)
+void imprimirIndiceHash(TabelaHash *tabela)
 {
     // Primeiro, contamos quantas entradas ocupadas existem
     int count = 0;
-    for (int i = 0; i < table->size; i++)
+    for (int i = 0; i < tabela->tamanho; i++)
     {
-        if (table->entries[i].isOccupied == 1 && table->entries[i].keyword)
+        if (tabela->entradas[i].ocupado == 1 && tabela->entradas[i].palavraChave)
         {
             count++;
         }
     }
-
-    // Criamos um array temporário para armazenar ponteiros para as entradas ocupadas
-    HashEntry **occupied = (HashEntry **)malloc(count * sizeof(HashEntry *));
+    // usa um array temporário para armazenar ponteiros para as entradas ocupadas
+    EntradaHash **occupied = (EntradaHash **)malloc(count * sizeof(EntradaHash *));
     if (occupied == NULL)
     {
         printf("Erro de alocação de memória\n");
         return;
     }
-
     // Preenchemos o array com ponteiros para as entradas ocupadas
     int index = 0;
-    for (int i = 0; i < table->size; i++)
+    for (int i = 0; i < tabela->tamanho; i++)
     {
-        if (table->entries[i].isOccupied == 1 && table->entries[i].keyword)
+        if (tabela->entradas[i].ocupado == 1 && tabela->entradas[i].palavraChave)
         {
-            occupied[index++] = &(table->entries[i]);
+            occupied[index++] = &(tabela->entradas[i]);
         }
     }
-
     // Ordenamos o array usando qsort e uma função de comparação
-    qsort(occupied, count, sizeof(HashEntry *), compareHashEntries);
-
+    qsort(occupied, count, sizeof(EntradaHash *), compararEntradasHash);
     // Imprimimos as entradas em ordem alfabética
     for (int i = 0; i < count; i++)
     {
-        printf("%ls: ", occupied[i]->keyword);
-        printPositionsHash(occupied[i]->positions);
+        printf("%ls: ", occupied[i]->palavraChave);
+        imprimirPosicoesHash(occupied[i]->posicoesHash);
     }
-
     // Liberamos a memória alocada
     free(occupied);
 }
 
 // Libera a memória da tabela hash
-void freeHashTable(HashTable *table)
+void freeTabelaHash(TabelaHash *tabela)
 {
-    for (int i = 0; i < table->size; i++)
+    for (int i = 0; i < tabela->tamanho; i++)
     {
-        if (table->entries[i].keyword)
+        if (tabela->entradas[i].palavraChave)
         {
-            free(table->entries[i].keyword);
+            free(tabela->entradas[i].palavraChave);
         }
 
-        PositionNodeHash *curr = table->entries[i].positions;
+        NoPosicaoHash *curr = tabela->entradas[i].posicoesHash;
         while (curr)
         {
-            PositionNodeHash *temp = curr;
-            curr = curr->next;
+            NoPosicaoHash *temp = curr;
+            curr = curr->proximo;
             free(temp);
         }
     }
 
-    free(table->entries);
-    free(table);
+    free(tabela->entradas);
+    free(tabela);
 }

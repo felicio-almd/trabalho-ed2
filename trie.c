@@ -1,7 +1,7 @@
 #include "trie.h"
 
 // Função para obter o índice do caractere no trie
-int get_char_index(wchar_t c)
+int obterIndiceCaractere(wchar_t c)
 {
     switch (c)
     {
@@ -33,6 +33,8 @@ int get_char_index(wchar_t c)
         return 38;
     case L'@':
         return 39;
+    case L'-':
+        return 40;
     default:
         if (c >= L'a' && c <= L'z')
             return c - L'a';
@@ -40,134 +42,135 @@ int get_char_index(wchar_t c)
     }
 }
 
-TrieNode *createTrieNode()
+NoTrie *criarNoTrie()
 {
-    TrieNode *node = (TrieNode *)malloc(sizeof(TrieNode));
+    NoTrie *node = (NoTrie *)malloc(sizeof(NoTrie));
     for (int i = 0; i < 128; i++)
     {
-        node->children[i] = NULL;
+        node->filhos[i] = NULL;
     }
-    node->keyword = NULL;
-    node->positions = NULL;
+    node->palavraChave = NULL;
+    node->posicoes = NULL;
     return node;
 }
 
-void insertKeyword(TrieNode *root, const wchar_t *word)
+void inserirPalavraChaveTrie(NoTrie *raiz, const wchar_t *palavra)
 {
-    TrieNode *node = root;
-    size_t len = wcslen(word);
+    NoTrie *node = raiz;
+    size_t len = wcslen(palavra);
     wchar_t *normalized = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
 
     // Converte para minúsculas mas mantém os acentos
     for (size_t i = 0; i < len; i++)
     {
-        normalized[i] = towlower(word[i]);
+        normalized[i] = towlower(palavra[i]);
     }
     normalized[len] = L'\0';
 
     for (int i = 0; normalized[i]; i++)
     {
-        int index = get_char_index(normalized[i]);
+        int index = obterIndiceCaractere(normalized[i]);
         if (index < 0)
             continue;
 
-        if (!node->children[index])
+        if (!node->filhos[index])
         {
-            node->children[index] = createTrieNode();
+            node->filhos[index] = criarNoTrie();
         }
-        node = node->children[index];
+        node = node->filhos[index];
     }
 
-    if (node->keyword)
-        free(node->keyword);
-    node->keyword = wcsdup(word);
+    if (node->palavraChave)
+        free(node->palavraChave);
+    node->palavraChave = wcsdup(palavra);
     free(normalized);
 }
 
-void addPosition(PositionNode **head, int position)
+void adicionarPosicaoTrie(NoPosicaoTrie **cabeca, int posicao)
 {
-    position++; // Começa do 1
+    posicao++; // Começa do 1
 
-    PositionNode *newNode = (PositionNode *)malloc(sizeof(PositionNode));
-    newNode->position = position;
+    NoPosicaoTrie *newNode = (NoPosicaoTrie *)malloc(sizeof(NoPosicaoTrie));
+    newNode->posicao = posicao;
 
-    if (*head == NULL || (*head)->position > position)
+    if (*cabeca == NULL || (*cabeca)->posicao > posicao)
     {
-        newNode->next = *head;
-        *head = newNode;
+        newNode->proximo = *cabeca;
+        *cabeca = newNode;
         return;
     }
 
-    PositionNode *current = *head;
-    while (current->next != NULL && current->next->position < position)
+    NoPosicaoTrie *current = *cabeca;
+    while (current->proximo != NULL && current->proximo->posicao < posicao)
     {
-        current = current->next;
+        current = current->proximo;
     }
 
-    newNode->next = current->next;
-    current->next = newNode;
+    newNode->proximo = current->proximo;
+    current->proximo = newNode;
 }
 
-void processTextTrie(TrieNode *root, wchar_t word[256], int logicalPosition, int wordLen)
+void processarTextoTrie(NoTrie *raiz, wchar_t palavra[1000], int posicaoLogica, int tamanhoPalavra)
 {
-    TrieNode *node;
-    node = root;
+    NoTrie *no;
+    no = raiz;
 
-    for (size_t k = 0; k < wordLen; k++)
+    for (size_t k = 0; k < tamanhoPalavra; k++)
     {
-        int index = get_char_index(word[k]);
-        if (index < 0 || !node->children[index])
+        // pega caractere um por um
+        int index = obterIndiceCaractere(palavra[k]);
+        if (index < 0 || !no->filhos[index])
         {
-            node = NULL;
+            no = NULL;
             break;
         }
-        node = node->children[index];
+        no = no->filhos[index];
     }
-    if (node && node->keyword)
+    if (no && no->palavraChave)
     {
-        addPosition(&node->positions, logicalPosition);
+        adicionarPosicaoTrie(&no->posicoes, posicaoLogica);
     }
 }
 
-void printPositions(PositionNode *node)
+void imprimirPosicoesTrie(NoPosicaoTrie *no)
 {
-    while (node)
+    while (no)
     {
-        printf("%d", node->position);
-        node = node->next;
-        if (node)
+        printf("%d", no->posicao);
+        no = no->proximo;
+        if (no)
             printf(" ");
     }
     printf("\n");
 }
 
-void printIndex(TrieNode *node)
+void imprimirIndiceTrie(NoTrie *node)
 {
     if (!node)
         return;
-    if (node->keyword)
+    if (node->palavraChave)
     {
-        printf("%ls: ", node->keyword);
-        printPositions(node->positions);
+        printf("%ls: ", node->palavraChave);
+        imprimirPosicoesTrie(node->posicoes);
     }
     for (int i = 0; i < 128; i++)
     {
-        printIndex(node->children[i]);
+        imprimirIndiceTrie(node->filhos[i]);
     }
 }
 
-void printTrie(TrieNode *currentNode, wchar_t *currentPath, int currentDepth, int currentIndentation)
+void imprimirTrie(NoTrie *noAtual, wchar_t *caminhoAtual, int profundidadeAtual, int indentacaoAtual)
 {
-    if (!currentNode)
+    if (!noAtual)
         return;
 
     // Se for um nó que representa uma palavra-chave
-    if (currentNode->keyword)
+    if (noAtual->palavraChave)
     {
-        currentPath[currentDepth] = L'\0'; // Finaliza a string no caminho atual
-        for (int i = 0; i < currentIndentation - 1; i++)
+        caminhoAtual[profundidadeAtual] = L'\0'; // Finaliza a string no caminho atual
+        for (int i = 0; i < indentacaoAtual - 1; i++)
             printf("  ");
-        printf("  (palavra: %ls)", currentNode->keyword);
+        printf("  (palavra: %ls)", noAtual->palavraChave);
 
         printf("\n");
     }
@@ -175,90 +178,96 @@ void printTrie(TrieNode *currentNode, wchar_t *currentPath, int currentDepth, in
     // Percorre todos os possíveis caracteres (incluindo acentuados)
     for (int i = 0; i < 128; i++)
     {
-        if (currentNode->children[i])
+        if (noAtual->filhos[i])
         {
             // Descobre qual caractere corresponde ao índice
-            wchar_t currentChar = L' ';
+            wchar_t charAtual = L' ';
             if (i >= 0 && i < 26)
             {
-                currentChar = L'a' + i; // Caracteres de 'a' a 'z'
+                charAtual = L'a' + i; // pega caracteres de 'a' a 'z'
             }
             else
             {
-                // Mapeia caracteres acentuados baseado na lógica inversa de get_char_index
+                // mapeia caracteres acentuados baseado na lógica inversa de obterIndiceCaractere
                 switch (i)
                 {
                 case 26:
-                    currentChar = L'á';
+                    charAtual = L'á';
                     break;
                 case 27:
-                    currentChar = L'à';
+                    charAtual = L'à';
                     break;
                 case 28:
-                    currentChar = L'ã';
+                    charAtual = L'ã';
                     break;
                 case 29:
-                    currentChar = L'â';
+                    charAtual = L'â';
                     break;
                 case 30:
-                    currentChar = L'é';
+                    charAtual = L'é';
                     break;
                 case 31:
-                    currentChar = L'ê';
+                    charAtual = L'ê';
                     break;
                 case 32:
-                    currentChar = L'í';
+                    charAtual = L'í';
                     break;
                 case 33:
-                    currentChar = L'ó';
+                    charAtual = L'ó';
                     break;
                 case 34:
-                    currentChar = L'ô';
+                    charAtual = L'ô';
                     break;
                 case 35:
-                    currentChar = L'õ';
+                    charAtual = L'õ';
                     break;
                 case 36:
-                    currentChar = L'ú';
+                    charAtual = L'ú';
                     break;
                 case 37:
-                    currentChar = L'ü';
+                    charAtual = L'ü';
                     break;
                 case 38:
-                    currentChar = L'ç';
+                    charAtual = L'ç';
+                    break;
+                case 39:
+                    charAtual = L'@';
+                    break;
+                case 40:
+                    charAtual = L'-';
                     break;
                 }
             }
 
-            currentPath[currentDepth] = currentChar; // Adiciona o caractere ao caminho atual
+            caminhoAtual[profundidadeAtual] = charAtual; // Adiciona o caractere ao caminho atual
 
             // Imprime a estrutura hierárquica
-            for (int j = 0; j < currentIndentation; j++)
+            for (int j = 0; j < indentacaoAtual; j++)
                 printf("  ");
-            printf("|- %lc\n", currentChar);
+            printf("|- %lc\n", charAtual);
 
             // Chamada recursiva para o próximo nó
-            printTrie(currentNode->children[i], currentPath, currentDepth + 1, currentIndentation + 1);
+            imprimirTrie(noAtual->filhos[i], caminhoAtual, profundidadeAtual + 1, indentacaoAtual + 1);
         }
     }
 }
 
-void freeTrie(TrieNode *node)
+void freeTrie(NoTrie *node)
 {
     if (!node)
         return;
     for (int i = 0; i < 128; i++)
     {
-        freeTrie(node->children[i]);
+        freeTrie(node->filhos[i]);
     }
-    PositionNode *curr = node->positions;
+    NoPosicaoTrie *curr = node->posicoes;
     while (curr)
     {
-        PositionNode *temp = curr;
-        curr = curr->next;
+        NoPosicaoTrie *temp = curr;
+        curr = curr->proximo;
         free(temp);
     }
-    if (node->keyword)
-        free(node->keyword);
+    if (node->palavraChave)
+        free(node->palavraChave);
     free(node);
 }

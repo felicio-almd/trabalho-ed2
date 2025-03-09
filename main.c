@@ -1,40 +1,43 @@
 #include "trie.h"
 #include "hash.h"
 #include "processamento.h"
+#include <time.h>
 
-TrieNode *OpenTrie(wchar_t **palavras, int numPalavrasChave)
+NoTrie *iniciarTrie(wchar_t **palavras, int numPalavrasChave)
 {
-    TrieNode *raiz = createTrieNode();
+    NoTrie *raiz = criarNoTrie();
     for (int i = 0; i < numPalavrasChave; i++)
     {
-        insertKeyword(raiz, palavras[i]);
+        inserirPalavraChaveTrie(raiz, palavras[i]);
     }
     return raiz;
 }
 
-HashTable *OpenHash(wchar_t **palavras, int numPalavrasChave)
+TabelaHash *iniciarTabelaHash(wchar_t **palavras, int numPalavrasChave)
 {
-    HashTable *table = createHashTable(numPalavrasChave);
+    TabelaHash *tabela = criarTabelaHash(numPalavrasChave);
     for (int i = 0; i < numPalavrasChave; ++i)
     {
-        insertKeywordHash(table, palavras[i]);
+        inserirPalavraChaveHash(tabela, palavras[i]);
     }
-    return table;
+    return tabela;
 }
 
-void ProcessText(TrieNode *trie, HashTable *table, DadosProcessados *dados)
+void processarTexto(NoTrie *trie, TabelaHash *tabela, DadosProcessados *dados)
 {
     wchar_t *texto = dados->texto;
     size_t tamanhoTexto = wcslen(texto);
     int posicaoLogica = 0;
     for (size_t i = 0; i < tamanhoTexto;)
     {
-        wchar_t palavra[256];
+        wchar_t palavra[1000];
         int tamanhoPalavra = 0;
         size_t j;
 
-        for (j = i; j < tamanhoTexto && iswalpha(texto[j]) && tamanhoPalavra < 255; j++)
+        // aceita caracteres, numero e alguns especiais, verifica caractere por caractere, depois deixa todos minusculos
+        for (j = i; j < tamanhoTexto && (iswalpha(texto[j]) || texto[j] == L'@' || texto[j] == L'-') && tamanhoPalavra < 255; j++)
         {
+            // case insensitive
             palavra[tamanhoPalavra++] = towlower(texto[j]);
         }
         palavra[tamanhoPalavra] = L'\0';
@@ -42,13 +45,15 @@ void ProcessText(TrieNode *trie, HashTable *table, DadosProcessados *dados)
         {
             if (trie != NULL)
             {
-                processTextTrie(trie, palavra, posicaoLogica, tamanhoPalavra);
+                processarTextoTrie(trie, palavra, posicaoLogica, tamanhoPalavra);
                 i = i + tamanhoPalavra - 1;
                 posicaoLogica = posicaoLogica + tamanhoPalavra - 1;
             }
-            if (table != NULL)
+            if (tabela != NULL)
             {
-                processTextHash(table, palavra, posicaoLogica);
+                processarTextoHash(tabela, palavra, posicaoLogica);
+                i = i + tamanhoPalavra - 1;
+                posicaoLogica = posicaoLogica + tamanhoPalavra - 1;
             }
         }
         posicaoLogica++;
@@ -76,23 +81,33 @@ int main()
     int opcao = -1;
     char arquivoTexto[256];
     char arquivoPalavrasChave[256];
-    wchar_t palavraChave[256];
+    wchar_t palavraChave[1000];
     DadosProcessados *dados = NULL;
-    TrieNode *raiz = NULL;
-    HashTable *table = NULL;
+    NoTrie *raiz = NULL;
+    TabelaHash *tabela = NULL;
+
+    // variaveis para tempo de execução do código
+    clock_t inicio, fim;
+    double tempoHash, tempoArvore;
 
     while (opcao != 0)
     {
         exibirMenu();
-        scanf("%d", &opcao);
+        if (scanf("%d", &opcao) != 1)
+        {
+            while (getchar() != '\n')
+                ;
+            printf("\nEntrada inválida. Por favor, digite um número.\n");
+            continue;
+        }
         switch (opcao)
         {
         case 1:
             printf("\nDigite o nome do arquivo de texto: ");
             scanf("%s", arquivoTexto);
-            printf("\nDigite o nome do aruivo de palavras chave: ");
+            printf("\nDigite o nome do arquivo de palavras chave: ");
             scanf("%s", arquivoPalavrasChave);
-            dados = processar_arquivos(arquivoPalavrasChave, arquivoTexto);
+            dados = processarArquivos(arquivoPalavrasChave, arquivoTexto);
             if (!dados)
             {
                 printf("\nErro nos dados dos arquivos.\n\n");
@@ -105,14 +120,17 @@ int main()
         case 2:
             if (dados)
             {
-                if (table)
+                if (tabela)
                 {
-                    freeHashTable(table);
-                    table = NULL;
+                    freeTabelaHash(tabela);
+                    tabela = NULL;
                 }
-                table = OpenHash(dados->palavras_chave, dados->num_palavras);
-                ProcessText(NULL, table, dados);
-                if (!table)
+                inicio = clock();
+                tabela = iniciarTabelaHash(dados->palavrasChave, dados->numPalavras);
+                processarTexto(NULL, tabela, dados);
+                fim = clock();
+                tempoHash = ((double)fim - inicio) / CLOCKS_PER_SEC;
+                if (!tabela)
                 {
                     printf("\nErro no indice remissivo com hash.\n");
                 }
@@ -130,8 +148,11 @@ int main()
                     freeTrie(raiz);
                     raiz = NULL;
                 }
-                raiz = OpenTrie(dados->palavras_chave, dados->num_palavras);
-                ProcessText(raiz, NULL, dados);
+                inicio = clock();
+                raiz = iniciarTrie(dados->palavrasChave, dados->numPalavras);
+                processarTexto(raiz, NULL, dados);
+                fim = clock();
+                tempoArvore = ((double)fim - inicio) / CLOCKS_PER_SEC;
                 if (!raiz)
                 {
                     printf("\nErro no indice remissivo com arvore digital.\n");
@@ -143,10 +164,12 @@ int main()
             }
             break;
         case 4:
-            if (table)
+            if (tabela)
             {
                 printf("\nIndice remissivo com Tabela Hash:\n");
-                printIndexHash(table);
+                imprimirIndiceHash(tabela);
+                printf("\n");
+                printf("Tempo gasto com a Hash: %f segundos", tempoHash);
                 printf("\n\n");
             }
             else
@@ -156,7 +179,9 @@ int main()
             if (raiz)
             {
                 printf("\nIndice remissivo com arvore digital:\n");
-                printIndex(raiz);
+                imprimirIndiceTrie(raiz);
+                printf("\n");
+                printf("Tempo gasto com a Trie: %f segundos", tempoArvore);
                 printf("\n\n");
             }
             else
@@ -165,9 +190,9 @@ int main()
             }
             break;
         case 5:
-            if (table)
+            if (tabela)
             {
-                printHashTable(table);
+                imprimirTabelaHash(tabela);
             }
             else
             {
@@ -177,7 +202,7 @@ int main()
         case 6:
             if (raiz)
             {
-                printTrie(raiz, palavraChave, 0, 1);
+                imprimirTrie(raiz, palavraChave, 0, 1);
             }
             else
             {
@@ -185,10 +210,10 @@ int main()
             }
             break;
         case 7:
-            if (table)
+            if (tabela)
             {
-                freeHashTable(table);
-                table = NULL;
+                freeTabelaHash(tabela);
+                tabela = NULL;
             }
             if (raiz)
             {
@@ -197,6 +222,18 @@ int main()
             }
             break;
         case 0:
+            if (dados)
+            {
+                liberarDados(dados);
+            }
+            if (tabela)
+            {
+                freeTabelaHash(tabela);
+            }
+            if (raiz)
+            {
+                freeTrie(raiz);
+            }
             printf("\nFinalizando programa...\n");
             break;
         default:
@@ -204,6 +241,5 @@ int main()
             break;
         }
     }
-
     return 0;
 }
