@@ -21,5 +21,9 @@ make
 
 # Depois rode com o exe criado
 
-./index_remissivo
+./indice
 ```
+
+e então é so utilizar o menu para o seu indice remissivo!
+
+Feito por Carlos, Felicio e Matheus
