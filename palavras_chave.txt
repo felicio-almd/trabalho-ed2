@@ -1,5 +1,6 @@
 literatura
-Classica
-grandes
-romantismo
-pais
+clássica
+brasileira
+país
+realismo
+gerações

@@ -1,125 +1,273 @@
 #include "trie.h"
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
-void normalize_char(char *c)
+// Função para obter o índice do caractere no trie
+int obterIndiceCaractere(wchar_t c)
 {
-    // Remove acentos e converte para minúscula
-    switch (*c)
+    switch (c)
     {
-    case 'á':
-    case 'à':
-    case 'â':
-    case 'ã':
-    case 'ä':
-        *c = 'a';
-        break;
-    case 'é':
-    case 'è':
-    case 'ê':
-    case 'ë':
-        *c = 'e';
-        break;
-    case 'í':
-    case 'ì':
-    case 'î':
-    case 'ï':
-        *c = 'i';
-        break;
-    case 'ó':
-    case 'ò':
-    case 'ô':
-    case 'õ':
-    case 'ö':
-        *c = 'o';
-        break;
-    case 'ú':
-    case 'ù':
-    case 'û':
-    case 'ü':
-        *c = 'u';
-        break;
-    case 'ç':
-        *c = 'c';
-        break;
+    case L'á':
+        return 26;
+    case L'à':
+        return 27;
+    case L'ã':
+        return 28;
+    case L'â':
+        return 29;
+    case L'é':
+        return 30;
+    case L'ê':
+        return 31;
+    case L'í':
+        return 32;
+    case L'ó':
+        return 33;
+    case L'ô':
+        return 34;
+    case L'õ':
+        return 35;
+    case L'ú':
+        return 36;
+    case L'ü':
+        return 37;
+    case L'ç':
+        return 38;
+    case L'@':
+        return 39;
+    case L'-':
+        return 40;
     default:
-        *c = tolower(*c);
-        break;
+        if (c >= L'a' && c <= L'z')
+            return c - L'a';
+        return -1;
     }
 }
 
-TrieNode *create_node()
+NoTrie *criarNoTrie()
 {
-    TrieNode *node = (TrieNode *)malloc(sizeof(TrieNode));
-    node->is_end_of_word = false;
-    node->position_count = 0;
-    for (int i = 0; i < ALPHABET_SIZE; i++)
+    NoTrie *node = (NoTrie *)malloc(sizeof(NoTrie));
+    for (int i = 0; i < 128; i++)
     {
-        node->children[i] = NULL;
+        node->filhos[i] = NULL;
     }
+    node->palavraChave = NULL;
+    node->posicoes = NULL;
     return node;
 }
 
-void insert_trie(TrieNode *root, const char *word, int position)
+void inserirPalavraChaveTrie(NoTrie *raiz, const wchar_t *palavra)
 {
-    TrieNode *current = root;
-    char normalized_char;
+    NoTrie *node = raiz;
+    size_t len = wcslen(palavra);
+    wchar_t *normalized = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
 
-    for (int i = 0; word[i] != '\0' && word[i] != '.' && word[i] != ','; i++)
+    // Converte para minúsculas mas mantém os acentos
+    for (size_t i = 0; i < len; i++)
     {
-        normalized_char = word[i];
-        normalize_char(&normalized_char); // Remove acentos e converte para minúscula
+        normalized[i] = towlower(palavra[i]);
+    }
+    normalized[len] = L'\0';
 
-        // Interrompe se não for uma letra após normalização
-        if (!isalpha(normalized_char))
+    for (int i = 0; normalized[i]; i++)
+    {
+        int index = obterIndiceCaractere(normalized[i]);
+        if (index < 0)
+            continue;
+
+        if (!node->filhos[index])
         {
+            node->filhos[index] = criarNoTrie();
+        }
+        node = node->filhos[index];
+    }
+
+    if (node->palavraChave)
+        free(node->palavraChave);
+    node->palavraChave = wcsdup(palavra);
+    free(normalized);
+}
+
+void adicionarPosicaoTrie(NoPosicaoTrie **cabeca, int posicao)
+{
+    posicao++; // Começa do 1
+
+    NoPosicaoTrie *newNode = (NoPosicaoTrie *)malloc(sizeof(NoPosicaoTrie));
+    newNode->posicao = posicao;
+
+    if (*cabeca == NULL || (*cabeca)->posicao > posicao)
+    {
+        newNode->proximo = *cabeca;
+        *cabeca = newNode;
+        return;
+    }
+
+    NoPosicaoTrie *current = *cabeca;
+    while (current->proximo != NULL && current->proximo->posicao < posicao)
+    {
+        current = current->proximo;
+    }
+
+    newNode->proximo = current->proximo;
+    current->proximo = newNode;
+}
+
+void processarTextoTrie(NoTrie *raiz, wchar_t palavra[1000], int posicaoLogica, int tamanhoPalavra)
+{
+    NoTrie *no;
+    no = raiz;
+
+    for (size_t k = 0; k < tamanhoPalavra; k++)
+    {
+        // pega caractere um por um
+        int index = obterIndiceCaractere(palavra[k]);
+        if (index < 0 || !no->filhos[index])
+        {
+            no = NULL;
             break;
         }
-
-        int index = normalized_char - 'a'; // Índice baseado em letras minúsculas
-
-        if (index < 0 || index >= ALPHABET_SIZE)
-        {
-            continue; // Ignora caracteres fora do intervalo (ex: 'ç' normalizado para 'c')
-        }
-
-        if (!current->children[index])
-        {
-            current->children[index] = create_node();
-        }
-        current = current->children[index];
+        no = no->filhos[index];
     }
-
-    if (current != root)
-    { // Evita marcar a raiz como fim de palavra
-        current->is_end_of_word = true;
-        current->positions[current->position_count++] = position;
-    }
-}
-
-TrieNode *search_trie(TrieNode *root, const char *word)
-{
-    TrieNode *current = root;
-    for (int i = 0; word[i] != '\0'; i++)
+    if (no && no->palavraChave)
     {
-        int index = word[i] - 'a';
-        if (!current->children[index])
-        {
-            return NULL;
-        }
-        current = current->children[index];
+        adicionarPosicaoTrie(&no->posicoes, posicaoLogica);
     }
-    return current;
 }
 
-void delete_index_trie(TrieNode *root)
+void imprimirPosicoesTrie(NoPosicaoTrie *no)
 {
-    if (!root)
+    while (no)
+    {
+        printf("%d", no->posicao);
+        no = no->proximo;
+        if (no)
+            printf(" ");
+    }
+    printf("\n");
+}
+
+void imprimirIndiceTrie(NoTrie *node)
+{
+    if (!node)
         return;
-    for (int i = 0; i < ALPHABET_SIZE; i++)
+    if (node->palavraChave)
     {
-        delete_index_trie(root->children[i]);
+        printf("%ls: ", node->palavraChave);
+        imprimirPosicoesTrie(node->posicoes);
     }
-    free(root);
+    for (int i = 0; i < 128; i++)
+    {
+        imprimirIndiceTrie(node->filhos[i]);
+    }
+}
+
+void imprimirTrie(NoTrie *noAtual, wchar_t *caminhoAtual, int profundidadeAtual, int indentacaoAtual)
+{
+    if (!noAtual)
+        return;
+
+    // Se for um nó que representa uma palavra-chave
+    if (noAtual->palavraChave)
+    {
+        caminhoAtual[profundidadeAtual] = L'\0'; // Finaliza a string no caminho atual
+        for (int i = 0; i < indentacaoAtual - 1; i++)
+            printf("  ");
+        printf("  (palavra: %ls)", noAtual->palavraChave);
+
+        printf("\n");
+    }
+
+    // Percorre todos os possíveis caracteres (incluindo acentuados)
+    for (int i = 0; i < 128; i++)
+    {
+        if (noAtual->filhos[i])
+        {
+            // Descobre qual caractere corresponde ao índice
+            wchar_t charAtual = L' ';
+            if (i >= 0 && i < 26)
+            {
+                charAtual = L'a' + i; // pega caracteres de 'a' a 'z'
+            }
+            else
+            {
+                // mapeia caracteres acentuados baseado na lógica inversa de obterIndiceCaractere
+                switch (i)
+                {
+                case 26:
+                    charAtual = L'á';
+                    break;
+                case 27:
+                    charAtual = L'à';
+                    break;
+                case 28:
+                    charAtual = L'ã';
+                    break;
+                case 29:
+                    charAtual = L'â';
+                    break;
+                case 30:
+                    charAtual = L'é';
+                    break;
+                case 31:
+                    charAtual = L'ê';
+                    break;
+                case 32:
+                    charAtual = L'í';
+                    break;
+                case 33:
+                    charAtual = L'ó';
+                    break;
+                case 34:
+                    charAtual = L'ô';
+                    break;
+                case 35:
+                    charAtual = L'õ';
+                    break;
+                case 36:
+                    charAtual = L'ú';
+                    break;
+                case 37:
+                    charAtual = L'ü';
+                    break;
+                case 38:
+                    charAtual = L'ç';
+                    break;
+                case 39:
+                    charAtual = L'@';
+                    break;
+                case 40:
+                    charAtual = L'-';
+                    break;
+                }
+            }
+
+            caminhoAtual[profundidadeAtual] = charAtual; // Adiciona o caractere ao caminho atual
+
+            // Imprime a estrutura hierárquica
+            for (int j = 0; j < indentacaoAtual; j++)
+                printf("  ");
+            printf("|- %lc\n", charAtual);
+
+            // Chamada recursiva para o próximo nó
+            imprimirTrie(noAtual->filhos[i], caminhoAtual, profundidadeAtual + 1, indentacaoAtual + 1);
+        }
+    }
+}
+
+void freeTrie(NoTrie *node)
+{
+    if (!node)
+        return;
+    for (int i = 0; i < 128; i++)
+    {
+        freeTrie(node->filhos[i]);
+    }
+    NoPosicaoTrie *curr = node->posicoes;
+    while (curr)
+    {
+        NoPosicaoTrie *temp = curr;
+        curr = curr->proximo;
+        free(temp);
+    }
+    if (node->palavraChave)
+        free(node->palavraChave);
+    free(node);
 }
